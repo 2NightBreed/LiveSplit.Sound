@@ -18,7 +18,7 @@ public class SoundComponent : LogicComponent, IDeactivatableComponent
 
     private LiveSplitState State { get; set; }
     private SoundSettings Settings { get; set; }
-    private WaveOut Player { get; set; }
+    private WaveOutEvent Player { get; set; }
     private Random Rnd { get; set; }
 
     public SoundComponent(LiveSplitState state)
@@ -27,7 +27,7 @@ public class SoundComponent : LogicComponent, IDeactivatableComponent
 
         State = state;
         Settings = new SoundSettings();
-        Player = new WaveOut();
+        Player = new WaveOutEvent();
 
         State.OnStart += State_OnStart;
         State.OnSplit += State_OnSplit;
