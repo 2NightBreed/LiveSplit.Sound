@@ -1,6 +1,7 @@
 ﻿using LiveSplit.Model;
 using LiveSplit.Options;
 using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 using System;
 using System.IO;
 using System.Linq;
@@ -20,6 +21,7 @@ public class SoundComponent : LogicComponent, IDeactivatableComponent
     private SoundSettings Settings { get; set; }
     private WaveOut Player { get; set; }
     private Random Rnd { get; set; }
+    private IWaveProvider AudioFileReader { get; set; }
 
     public SoundComponent(LiveSplitState state)
     {
@@ -190,13 +192,32 @@ public class SoundComponent : LogicComponent, IDeactivatableComponent
         {
             try
             {
-                var audioFileReader = new AudioFileReader(path)
+                var isMp3 = string.Equals(Path.GetExtension(path), ".mp3", StringComparison.OrdinalIgnoreCase);
+                var volumeLevel = volume / 100f * (Settings.GeneralVolume / 100f);
+
+                if (isMp3)
                 {
-                    Volume = volume / 100f * (Settings.GeneralVolume / 100f)
-                };
+                    var mp3FileReader = new Mp3FileReader(path);
+                    var mp3SampleProvider = mp3FileReader.ToSampleProvider();
+                    var mp3VolumeSampleProvider = new VolumeSampleProvider(mp3SampleProvider)
+                    {
+                        Volume = volumeLevel
+                    };
+
+                    AudioFileReader = new SampleToWaveProvider(mp3VolumeSampleProvider);
+                }
+                else
+                {
+                    var audioFileReader = new AudioFileReader(path)
+                    {
+                        Volume = volumeLevel
+                    };
+
+                    AudioFileReader = audioFileReader;
+                }
 
                 Player.DeviceNumber = Settings.OutputDevice;
-                Player.Init(audioFileReader);
+                Player.Init(AudioFileReader);
                 Player.Play();
             }
             catch (Exception e)
